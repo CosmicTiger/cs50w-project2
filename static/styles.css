@@ -5,8 +5,15 @@ body {
 
 /* Header styles */
 #FlackHeader {
-    border: 1px solid black;
+    align-content: center;
+    align-items: center;
+    background-color: #373D48;
+    color: #00A3E0;
+    display: flex;
+    flex-direction: row;
     height: 60px;
+    justify-content: flex-end;
+    padding-right: 2%;
 }
 
 /* Main styles */
@@ -22,34 +29,106 @@ body {
     height: 630px;
 }
 
-#FlackMain div.FlackSidebar {
-    /* border: 3px solid black; */
-    background-color: black;
+/* Main Styles - Blocks */
+#FlackMain .FlackSidebar {
+    background-color: #373D48;
     flex-basis: 20%;
     height: 100%;
 }
 
-#FlackMain div.FlackSidebar div.FlackSidebar-head {
-    border: 1px solid gray;
+/* Main Styles - Elements */
+#FlackMain .FlackSidebar .FlackSidebar-head {
+    border: 0.4px solid lightgray;
+    color: white;
+    height: 54px;
+    padding-left: 4.6%;
+    padding-top: 2.2%;
+}
+
+#FlackMain .FlackSidebar .FlackSidebar-body {
+    color: lightgray;
+    padding-left: 4.6%;
+}
+
+/* Main Styles - Modifiers */
+.FlackSidebar-title.main-title {
+    font-size: 1.8rem;
+}
+
+.FlackSidebar-title.channel-title {
+    font-size: 1.25rem;
+}
+
+.FlackSidebar-messages {
+    list-style-type: none;
+}
+
+.FlackSidebar-channels i {
+    margin-right: 10px;
 }
 
 .FlackContent {
     align-content: flex-start;
     align-items: flex-start;
-    border: 3px solid black;
+    background-color: #4A5664;
     display: flex;
+    flex-direction: column;
+    flex-basis: 79.8%;
+    height: 100%;
     justify-content: flex-start;
-    flex-basis: 78%;
 }
 
-.FlackContent div h2 {
-    font-size: 2.5rem;
-    padding-left: 30px;
+.FlackContent div {
+    width: 100%;
 }
 
-.FlackContent form {
+.FlackContent-head {
+    background-color: #373D48;
+    border: 0.4px solid lightgray;
+    color: white;
+}
+
+.FlackContent .FlackContent-head .FlackContent-title {
+    font-size: 2.25rem;
+    padding-left: 4.6%;
+    padding-top: 0.15%;
+}
+
+.FlackContent-messagesDisplay {
+    color: white;
+    height: 420px;
+    list-style-type: none;
+    width: 100%;
+}
+
+.FlackContent-messagesDisplay.scroll {
+    overflow-y: scroll;
+}
+
+.FlackContent-messages {
+    width: 94%;
+}
+
+.FlackContent-form {
     display: flex;
     flex-direction: row;
+    padding-left: 16px;
+    padding-right: 16px;
+    width: 100%;
+}
+
+.FlackContent-form .form-group {
+    flex-direction: column;
+}
+
+.FlackContent-options {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.FlackContent-optionsButton {
+    color: lightgray;
+    border: none;
 }
 
 /* Footer styles */
