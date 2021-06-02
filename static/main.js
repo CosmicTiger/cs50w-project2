@@ -1,111 +1,361 @@
-// main.js
-/**
- * @author CosmicTiger - Luisangel Marcia
- **/
+// a partir de aqui especificamos e inicializamos las funciones a utilizar
+function loadMessages(data) {
+        $('#messages').html("");
+        for (x in data['channels'][activeChannel]) {
+            const media=document.createElement('div');
+            if (data['channels'][activeChannel][x]['username']==localStorage.getItem('username')) {
+                media.className='media d-flex flex-row';
+            }else {
+                media.className='media';
+            }
+            const mediaLeft=document.createElement('div');
+            mediaLeft.className='media-left';
+            const mediaBody=document.createElement('div');
+            mediaBody.className='media-body';
+            const username=document.createElement('span');
+            username.innerHTML=data['channels'][activeChannel][x]['username']
+            username.className='text-username';
+            const p=document.createElement('p');
+            p.innerHTML=data['channels'][activeChannel][x]['text']
+            const avatar=document.createElement('img');
+            avatar.className='media-object';
+            avatar.src=`static/images/avatar${localStorage.getItem('id_username')}.jpg`;
+            const time=document.createElement('small');
+            time.innerHTML=data['channels'][activeChannel][x]['time'];
+            time.className='text-detail pl-2';
 
-// Catch the username in localStorage
-let username = localStorage.getItem("username")
-// Catch the last channel visited by username
-let lastChannel = localStorage.getItem("latest_channel")
-// Stablish the current channel of the session
-let currentChannel = (lastChannel) ? lastChannel : ""
-// Instance of socket.io
-const socketServer = io.connect(`${location.protocol}//${document.domain}:${location.port}`)
-// Instance for templates
-let message_template = null
+            $('#messages').append(media);
+            media.append(mediaLeft);
+            mediaBody.append(username);
+            mediaBody.append(time);
+            mediaBody.append(p);
+            mediaLeft.append(avatar);
+            mediaLeft.append(mediaBody)
 
-function getUsername () {
-    const loginForm = document.querySelector()
-    const formUsername = document.querySelector()
-    const formSubmit = document.querySelector()
-
-    formSubmit.disabled = true
-
-    formUsername.onkeyup = () => {
-        formSubmit.disabled = (formUsername.value.length > 0) ? false : true
+            $('#messages').scrollTop(500000);
     }
-
-    formSubmit.onsubmit = () => {
-        username = formUsername.value
-        localStorage.setItem('username', username)
-        window.location.reload(false)
-
-        return false
-    }
-
-    loginForm.style.display = "block"
 }
 
-// Socket functions
-function triggerSocket() {
-    // on connect, we add the event handler for submit the channels
-    socketServer.on("connect", () => {
-        document.querySelector().onsubmit = () => {
-            socketServer.emit("channels-new", {"channel": document.querySelector().value })
-            document.querySelector().value = ""
-            return false
+function loadPrivateMessages(data,otherUser) {
+    $('#messages').html("");
+    for (message in data['privateMessages'][localStorage.getItem('username')][otherUser]) {
+        const media=document.createElement('div');
+        if (data['privateMessages'][localStorage.getItem('username')][otherUser][message]['username']==localStorage.getItem('username')) {
+            media.className='media d-flex flex-row';
+        }else {
+            media.className='media';
+        }
+        const mediaLeft=document.createElement('div');
+        mediaLeft.className='media-left';
+        const mediaBody=document.createElement('div');
+        mediaBody.className='media-body';
+        const username=document.createElement('span');
+        username.innerHTML=data['privateMessages'][localStorage.getItem('username')][otherUser][message]['username']
+        username.className='text-username';
+        const p=document.createElement('p');
+        p.innerHTML=data['privateMessages'][localStorage.getItem('username')][otherUser][message]['text']
+        const avatar=document.createElement('img');
+        avatar.className='media-object';
+        avatar.src=`static/images/avatar${localStorage.getItem('id_username')}.jpg`;
+        const time=document.createElement('small');
+        time.innerHTML=data['privateMessages'][localStorage.getItem('username')][otherUser][message]['time'];
+        time.className='text-detail pl-2';
+
+        $('#messages').append(media);
+        media.append(mediaLeft);
+        mediaBody.append(username);
+        mediaBody.append(time);
+        mediaBody.append(p);
+        mediaLeft.append(avatar);
+        mediaLeft.append(mediaBody)
+
+        $('#messages').scrollTop(500000);
+}
+}
+
+function loadChannels(data) {
+    for (channel in data['channels']){
+        appendChannel(channel);
+    }
+
+}
+function appendChannel(channel) {
+    const li=document.createElement('li');
+    li.className='FlackSidebar-channels';
+    li.innerHTML='<i class="fas fa-hashtag"></i>'+channel.charAt(0).toUpperCase() + channel.slice(1);
+    li.setAttribute("id", channel);
+    $('#channelList').append(li);
+}
+
+function chooseUser(user) {
+    if (user!=localStorage.getItem('username')) {
+        const username=localStorage.getItem('username');
+        const time=new Date().toLocaleString();
+        activeChannel=localStorage.getItem('activeChannel');
+        privateWindow=true;
+        inRoom=false;
+        $('#messages').html("");
+        localStorage.setItem('activeMessage',user);
+        if (activeChannel!="General") {
+            socket.emit('leave',{'channel':activeChannel,'mymessage':'has left the room','username':username,'time':time});
+        }
+    }
+
+    $('#messageInput').focus();
+}
+
+$(function(){
+    // document ready
+    var socket=io.connect(location.protocol+'//'+document.domain+':'+location.port);
+    privateWindow=false;
+    inRoom=false;
+    socket.on('connect',()=>{
+        $('#messageInput').on("keyup",function(key) {
+            activeChannel=$("#channelList .active").attr('id');
+            //broadcast to all
+            if (key.keyCode==13 && $(this).val()!="" && !privateWindow && !inRoom) {
+                const mymessage=$(this).val();
+                const username=localStorage.getItem('username');
+                const time=new Date().toLocaleString();
+                $('#messageInput').val("")
+                socket.emit('submit to all',{'mymessage':mymessage,'username':username,'time':time});
+            }//send to room
+            if (key.keyCode==13 && $(this).val()!="" && !privateWindow && inRoom) {
+                const mymessage=$(this).val();
+                const username=localStorage.getItem('username');
+                const time=new Date().toLocaleString();
+                $('#messageInput').val("")
+                socket.emit('submit to room',{'channel':activeChannel,'mymessage':mymessage,'username':username,'time':time});
+            //send private
+            } else if (key.keyCode==13 && $(this).val()!="" && privateWindow && !inRoom) {
+                const mymessage=$(this).val();
+                const username=localStorage.getItem('username');
+                const username2=localStorage.getItem('activeMessage');
+                const time=new Date().toLocaleString();
+                $('#messageInput').val("")
+                socket.emit('private',{'mymessage':mymessage,'username':username,'time':time,'username2':username2});
+            }
+        });
+        $('#channelList').on('click','li', function(){
+            $('#messageInput').focus();
+            if (!localStorage.getItem('activeChannel')) {
+                activeChannel="General";
+            } else {
+                activeChannel=localStorage.getItem('activeChannel');
+            }
+            const username=localStorage.getItem('username');
+            const time=new Date().toLocaleString();
+            $(this).addClass('active');
+            $(this).siblings().removeClass('active');
+            $('#messages').html("");
+            if (activeChannel!="General" && !privateWindow) {
+                socket.emit('leave',{'channel':activeChannel,'mymessage':'has left the room','username':username,'time':time});
+            }
+            activeChannel=$("#channelList .active").attr('id');
+            localStorage.setItem('activeChannel',activeChannel)
+            if (activeChannel=='General') {
+                inRoom=false;
+                privateWindow=false;
+                return socket.emit('come back to general');
+            } else {
+                inRoom=true;
+                privateWindow=false;
+            }
+            socket.emit('join',{'channel':activeChannel,'mymessage':'has entered the room','username':username,'time':time});
+         });
+
+        if (!localStorage.getItem('username')) {
+            $("#myModal").modal({backdrop: 'static', keyboard: false});
+            $('.modal-title').text("Please enter your username");
+            $('#modalInput').val("");
+        }
+    });
+
+    socket.on('announce to all', data=> {
+        if (!privateWindow){
+            loadMessages(data);
         }
 
-        if (currentChannel) {
-            socket.emit("channels-join", {
-                "username": username,
-                "channel": currentChannel,
-            })
-        }
-    })
+        $('.text-username').on('click',function() {
+            chooseUser($(this).text());
+        });
+    });
 
-    socketServer.on('add username', data => {
+    socket.on('joined', data=> {
+        loadMessages(data);
+        $('#messageInput').focus();
+        $('.text-username').on('click',function() {
+            chooseUser($(this).text());
+        });
+    });
 
-        const { error, username } = data
+    socket.on('left', data=> {
+        loadMessages(data);
+    });
 
-        console.log(data)
+    socket.on('announce to room', data=> {
+        loadMessages(data);
+        $('.text-username').on('click',function() {
+            chooseUser($(this).text());
+        });
+    });
 
-        if(error != "") {
-            window.setTimeout(function() {
-                // const flackModal = document.querySelector("#FlackModal")
-                $("#FlackModal").modal({ backdrop: 'static', keyboard: false })
+    socket.on('load channels', data=> {
+        $('#channelList li').remove();
+        loadChannels(data);
+        $('<i class="fas fa-circle"></i>'+localStorage.getItem('activeChannel')).click();
+    });
 
-                const modalTitle = document.querySelector('.modal-title')
-                modalTitle.text(error)
-
-                const modalInput = document.querySelector("#modalInput")
-                modalInput.val("")
-
-                const modalButton = document.querySelector("#modalButton")
-                modalButton.attr('disabled', true)
-            }, 900)
+    socket.on('add username', data=> {
+        if (data["error"]!="") {
+            window.setTimeout(function () {
+                $("#myModal").modal({backdrop: 'static', keyboard: false});
+                $('.modal-title').text(data["error"]);
+                $('#modalInput').val("");
+                $("#modalButton").attr('disabled',true);
+            }, 900);
         } else {
-            localStorage.setItem('username', username)
-
-            const usernameIdentification = document.querySelector("#usernameIdentification")
-            usernameIdentification.text(localStorage.getItem("username"))
-
-            const generalChannel = document.querySelector("#general")
-            generalChannel.click()
-
-            const messageInput = document.querySelector("#messageInput")
-            messageInput.focus()
-
+            localStorage.setItem('username',data["username"]);
+            const rndInt = Math.floor(Math.random() * 6) + 1;
+            localStorage.setItem('id_username', rndInt)
+            $('#username').text(localStorage.getItem('username'));
+            $('#General').click();
+            $('#messageInput').focus();
         }
-    })
-}
+    });
 
-const main = () => {
-    // message_template = Handlebars.compile(document.querySelector().innerHTML)
+    socket.on('add channel', data=> {
+        if (data["error"]!="") {
+            window.setTimeout(function () {
+                $("#myModal").modal({backdrop: 'static', keyboard: false});
+                $('.modal-title').text(data["error"]);
+                $('#modalInput').val("");
+                $("#modalButton").attr('disabled',true);
+            }, 900);
+        } else {
+            appendChannel(data['channel']);
+            $('#channelList li:last').addClass('active');
+            $('#channelList li:last').click();
+            inRoom=true;
+            var removeHash=$('#channelList li:last').text().slice(1);
+            localStorage.setItem('activeChannel',removeHash);
+            $('#channelList').scrollTop(500000);
+            $('#messageInput').focus();
+            socket.emit('update users channels',{'channel':data['channel']});
+        }
+    });
 
-    return triggerSocket()
+    socket.on('update channels',data => {
+        if ($('#'+data['channel']).length==0){
+            appendChannel(data['channel']);
+        }
+    });
 
-    // if(!username) {
-    //     getUsername()
-    // } else {
-    //     // greetings to the user
-    //     const greetingUser = document.querySelector('#greeting')
-    //     gretting.innerHTML = `Hello, ${username}!`
-    //     greeting.style.display = "block"
+    socket.on('private room',data => {
+        const li=document.createElement('li');
+        li.className='FlackSidebar-channels';
+        if (data["sender"] == localStorage.getItem('username')) {
+            privateWindow=true;
+            inRoom=false;
+            $('#channelList .active').removeClass('active');
+            localStorage.setItem('activeMessage',data['receiver']);
+            loadPrivateMessages(data,data['receiver']);
+            var receiverExist=false;
+            $("#inbox > li").each(function() {
+                if ($(this).text().search(data['receiver']) > -1) {
+                    receiverExist=true;
+                }
+            });
+            if (!receiverExist){
+                li.innerHTML='<i class="fas fa-inbox"></i>'+data['receiver'];
+                $('#inbox').append(li);
+            }
+        } else {
+            //if private window open
+            if (privateWindow) {
+                if (localStorage.getItem('activeMessage')==data['sender']) {
+                    loadPrivateMessages(data,data['sender']);
+                } else {
+                    var senderExist=false;
+                    $("#inbox > li").each(function() {
+                    if ($(this).text().search(data['sender']) > -1) {
+                        $(this).html(data['sender']);
+                        $(this).addClass('bg-info');
+                        senderExist=true;
+                    }
+                    });
+                    if (!senderExist){
+                        li.innerHTML='<i class="fas fa-inbox"></i>'+data['sender'];
+                        li.className='FlackSidebar-channels';
+                        $('#inbox').append(li);
+                    }
+                }
+            } else {
+                var senderExist=false;
+                $("#inbox > li").each(function() {
+                    if ($(this).text().search(data['sender']) > -1) {
+                        $(this).html(data['sender']);
+                        $(this).addClass('bg-info');
+                        senderExist=true;
+                    }
+                });
+                if (!senderExist){
+                    li.innerHTML='<i class="fas fa-inbox"></i>'+data['sender'];
+                    li.className='FlackSidebar-channels';
+                    $('#inbox').append(li);
+                }
+            }
+        }
+        $('#inbox li').on('click', function(){
+            $('#messageInput').focus();
+            localStorage.setItem('activeMessage',$(this).text());
+            $(this).removeClass('bg-info');
+            loadPrivateMessages(data,$(this).text());
+            privateWindow=true;
+            const username=localStorage.getItem('username');
+            const time=new Date().toLocaleString();
+            activeChannel=localStorage.getItem('activeChannel');
+            if (activeChannel!="General" && inRoom ) {
+                socket.emit('leave',{'channel':activeChannel,'mymessage':'has left the room','username':username,'time':time});
+            }
+            inRoom=false;
+            $('#channelList .active').removeClass('active');
+        });
+    });
 
-    //     // show the messages of the channels to the user
-    //     document.querySelector().style.display = "block"
-    // }
-}
+    $("#modalInput").on('keyup', function (key) {
+        if ($(this).val().length > 0 ){
+            $("#modalButton").attr('disabled',false);
+            if (key.keyCode==13 ) {
+                $('#modalButton').click();
+            }
+        }
+        else {
+            $("#modalButton").attr('disabled',true);
+        }
+    });
 
-document.addEventListener('DOMContentLoaded', main())
+    $("#modalButton").on('click', function () {
+        // action for new username
+        if (!localStorage.getItem('username')) {
+            var username=$('#modalInput').val();
+            username=username.charAt(0).toUpperCase() + username.slice(1);
+            socket.emit('new username',{'username':username});
+        // action for new channelname
+        } else {
+            var channelName=$('#modalInput').val();
+            channelName=channelName.charAt(0).toUpperCase() + channelName.slice(1);
+            socket.emit('new channel',{'channel':channelName});
+        }
+    });
+
+    //little plus icon
+    $('kbd').on('click',function (){
+        $("#myModal").modal({backdrop: 'static', keyboard: false});
+        $('.modal-title').text("Please enter channel name");
+        $('#modalInput').val("");
+        $("#modalButton").attr('disabled',true);
+    });
+
+    $('#username').text(localStorage.getItem('username'));
+});
